@@ -2,6 +2,7 @@ import { Fragment, ReactElement, useCallback, useEffect, useRef, useState } from
 import { PdfViewerContainerProps } from "../typings/PdfViewerProps";
 import { getDocument, GlobalWorkerOptions, PDFDocumentProxy } from "pdfjs-dist";
 import { PDF_WORKER_SOURCE } from "./pdfWorkerSource";
+import "./ui/PdfViewer.css";
 
 /*
  * Olari PDF Viewer.
@@ -70,7 +71,8 @@ export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
             }
             host.innerHTML = "";
             pageOffsetsRef.current = [];
-            const availableWidth = Math.max(200, (scrollRef.current?.clientWidth ?? 800) - 32);
+            // Cap fit-width so pages stay letter-like in very wide panes.
+            const availableWidth = Math.min(1100, Math.max(200, (scrollRef.current?.clientWidth ?? 800) - 48));
             for (let n = 1; n <= pdf.numPages; n++) {
                 if (token !== renderTokenRef.current) {
                     return; // superseded by a newer render
