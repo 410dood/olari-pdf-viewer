@@ -9,20 +9,13 @@
     <icon/>
     <properties>
         <propertyGroup caption="Data source">
-            <property key="documentDS" type="datasource" isList="true" required="false">
-                <caption>PDF file document</caption>
-                <description>List whose FIRST item is the FileDocument (specialization) to display. The file is streamed by URL — no base64.</description>
-            </property>
-            <property key="changedDateAttr" type="attribute" dataSource="documentDS" required="false">
-                <caption>Changed date (cache key)</caption>
-                <description>Optional changedDate attribute; busts the browser cache when the file is regenerated.</description>
-                <attributeTypes>
-                    <attributeType name="DateTime"/>
-                </attributeTypes>
+            <property key="pdfFile" type="file" required="false">
+                <caption>PDF file</caption>
+                <description>The FileDocument to display — streamed by URL via the platform-provided file URI (no base64).</description>
             </property>
             <property key="base64Fallback" type="attribute" required="false">
                 <caption>Base64 fallback</caption>
-                <description>Optional legacy base64 string attribute; used only when no file document is provided.</description>
+                <description>Optional legacy base64 string attribute; used only when no PDF file is configured.</description>
                 <attributeTypes>
                     <attributeType name="String"/>
                 </attributeTypes>

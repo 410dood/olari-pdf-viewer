@@ -1,4 +1,4 @@
-import { Fragment, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, ReactElement, useCallback, useEffect, useRef, useState } from "react";
 import { PdfViewerContainerProps } from "../typings/PdfViewerProps";
 import { getDocument, GlobalWorkerOptions, PDFDocumentProxy } from "pdfjs-dist";
 import { PDF_WORKER_SOURCE } from "./pdfWorkerSource";
@@ -28,20 +28,6 @@ function ensureOwnWorker(): void {
     workerInstalled = true;
 }
 
-function resolveFileUrl(guid: string, changedDate?: Date): string {
-    const mxAny = (window as unknown as { mx?: { data?: { getDocumentUrl?: (g: string, c?: number) => string } } }).mx;
-    try {
-        const viaMx = mxAny?.data?.getDocumentUrl?.(guid, changedDate ? changedDate.getTime() : undefined);
-        if (typeof viaMx === "string" && viaMx) {
-            return viaMx;
-        }
-    } catch (e) {
-        // fall through to manual URL
-    }
-    const cacheKey = changedDate ? changedDate.getTime() : Date.now();
-    return `${new URL("file", document.baseURI).toString()}?guid=${encodeURIComponent(guid)}&changedDate=${cacheKey}`;
-}
-
 function base64ToBytes(b64: string): Uint8Array {
     const clean = b64.replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
     const bin = atob(clean);
@@ -55,7 +41,7 @@ function base64ToBytes(b64: string): Uint8Array {
 type LoadState = { phase: "idle" | "loading" | "ready" | "error"; message?: string };
 
 export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
-    const { documentDS, changedDateAttr, base64Fallback, viewerHeight, showToolbar, showDownload } = props;
+    const { pdfFile, base64Fallback, viewerHeight, showToolbar, showDownload } = props;
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const docRef = useRef<PDFDocumentProxy | null>(null);
@@ -67,14 +53,13 @@ export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
     const [scale, setScale] = useState(1.25);
     const [fitWidth, setFitWidth] = useState(true);
 
-    const item = documentDS && documentDS.status === "available" ? documentDS.items?.[0] : undefined;
-    const changedDate = item && changedDateAttr ? changedDateAttr.get(item).value : undefined;
-    const fileUrl = useMemo(
-        () => (item ? resolveFileUrl(item.id, changedDate ?? undefined) : undefined),
-        [item, changedDate]
-    );
-    const base64 = !item && base64Fallback && base64Fallback.status === "available" ? base64Fallback.value : undefined;
-    const dsLoading = documentDS ? documentDS.status === "loading" : false;
+    // Platform-resolved file URI (cache key handled by Mendix).
+    const fileValue = pdfFile && pdfFile.status === "available" ? pdfFile.value : undefined;
+    const fileUrl = fileValue?.uri || undefined;
+    const fileName = fileValue?.name || undefined;
+    const base64 =
+        !fileUrl && base64Fallback && base64Fallback.status === "available" ? base64Fallback.value : undefined;
+    const dsLoading = pdfFile ? pdfFile.status === "loading" : false;
 
     const renderAllPages = useCallback(
         async (pdf: PDFDocumentProxy, useScale: number, useFitWidth: boolean) => {
@@ -214,7 +199,7 @@ export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
     const download = useCallback(async () => {
         try {
             let blob: Blob;
-            let name = "document.pdf";
+            let name = fileName || "document.pdf";
             if (fileUrl) {
                 const res = await fetch(fileUrl, { credentials: "same-origin" });
                 blob = await res.blob();
@@ -239,7 +224,7 @@ export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
         } catch (e) {
             // non-fatal
         }
-    }, [fileUrl, base64]);
+    }, [fileUrl, base64, fileName]);
 
     const height = viewerHeight && viewerHeight.trim() ? viewerHeight.trim() : "90vh";
 
