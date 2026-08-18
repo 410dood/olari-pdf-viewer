@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="olari.pdfviewer.PdfViewer" pluginWidget="true" needsEntityContext="true" offlineCapable="false"
+        supportedPlatform="Web"
+        xmlns="http://www.mendix.com/widget/1.0/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>PDF Viewer (Olari)</name>
+    <description>Streams a FileDocument PDF by URL and renders it in-page with pdf.js v4 (own instance, no shared globals).</description>
+    <icon/>
+    <properties>
+        <propertyGroup caption="Data source">
+            <property key="documentDS" type="datasource" isList="true" required="false">
+                <caption>PDF file document</caption>
+                <description>List whose FIRST item is the FileDocument (specialization) to display. The file is streamed by URL — no base64.</description>
+            </property>
+            <property key="changedDateAttr" type="attribute" dataSource="documentDS" required="false">
+                <caption>Changed date (cache key)</caption>
+                <description>Optional changedDate attribute; busts the browser cache when the file is regenerated.</description>
+                <attributeTypes>
+                    <attributeType name="DateTime"/>
+                </attributeTypes>
+            </property>
+            <property key="base64Fallback" type="attribute" required="false">
+                <caption>Base64 fallback</caption>
+                <description>Optional legacy base64 string attribute; used only when no file document is provided.</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Appearance">
+            <property key="viewerHeight" type="string" defaultValue="90vh" required="false">
+                <caption>Viewer height</caption>
+                <description>CSS height of the viewer (e.g. 90vh, 700px).</description>
+            </property>
+            <property key="showToolbar" type="boolean" defaultValue="true">
+                <caption>Show toolbar</caption>
+                <description/>
+            </property>
+            <property key="showDownload" type="boolean" defaultValue="true">
+                <caption>Show download button</caption>
+                <description/>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>
