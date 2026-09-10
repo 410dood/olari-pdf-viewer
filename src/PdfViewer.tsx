@@ -129,7 +129,17 @@ export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
                 } else {
                     data = base64ToBytes(base64 as string);
                 }
-                const pdf = await getDocument({ data }).promise;
+                // Security hardening (pentest F-2026-18787): PDFs are user-supplied and untrusted.
+                // This viewer renders to canvas only. It deliberately does not create a pdf.js
+                // scripting sandbox / PDFScriptingManager, so embedded PDF JavaScript
+                // (/OpenAction, /Names /JavaScript, AcroForm /AA) can never execute here.
+                // isEvalSupported:false additionally stops pdf.js from compiling PostScript
+                // font programs with `new Function`, and enableXfa:false keeps XFA forms off.
+                const pdf = await getDocument({
+                    data,
+                    isEvalSupported: false,
+                    enableXfa: false
+                }).promise;
                 if (cancelled) {
                     pdf.destroy();
                     return;

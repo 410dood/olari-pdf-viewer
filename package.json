@@ -1,7 +1,7 @@
 {
   "name": "olari.PdfViewer",
   "widgetName": "PdfViewer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Olari in-house PDF viewer. Streams a FileDocument by URL (no base64), pins its own pdf.js v4 + worker, and never touches the shared window.pdfjsLib global.",
   "author": "Olari",
   "license": "MIT",
