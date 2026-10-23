@@ -1,8 +1,8 @@
 {
   "name": "olari.PdfViewer",
   "widgetName": "PdfViewer",
-  "version": "1.1.0",
-  "description": "Olari in-house PDF viewer. Streams a FileDocument by URL (no base64), pins its own pdf.js v4 + worker, and never touches the shared window.pdfjsLib global.",
+  "version": "1.2.0",
+  "description": "Olari in-house PDF viewer. Streams a FileDocument by URL (no base64), loads the app's single pinned pdf.js (theme/web/resources/pdfjs/<version>) and never leaves its window.pdfjsLib global behind.",
   "author": "Olari",
   "license": "MIT",
   "engines": {
@@ -24,12 +24,11 @@
     "dev": "pluggable-widgets-tools start:web",
     "build": "pluggable-widgets-tools build:web",
     "lint": "pluggable-widgets-tools lint",
-    "release": "pluggable-widgets-tools release:web"
-  },
-  "dependencies": {
-    "pdfjs-dist": "^4.8.69"
+    "release": "pluggable-widgets-tools release:web",
+    "sync-pdfjs": "node scripts/sync-shared-pdfjs.js"
   },
   "devDependencies": {
+    "pdfjs-dist": "4.10.38",
     "@mendix/pluggable-widgets-tools": "^11.3.1",
     "@rollup/plugin-json": "^6.1.0",
     "rollup": "^3.29.4"

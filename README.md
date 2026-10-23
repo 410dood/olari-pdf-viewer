@@ -6,23 +6,24 @@ Built to replace `mxtechies.ViewerPdf`, whose pdf.js v3 collided with Mendix's s
 pdf.js v4 on `window.pdfjsLib` (load-order race → intermittent silent "Loading document…").
 
 ## Design rules
-- **No shared globals.** pdf.js is a scoped module import; `window.pdfjsLib` is never read or written.
-- **Worker ships in the bundle** (blob worker generated from the *same* pdfjs-dist build),
-  so API/worker versions can never mismatch and no relative `workerSrc` can 404.
+- **One pinned pdf.js for the whole app (1.2.0).** pdf.js is not bundled. The widget imports
+  `/resources/pdfjs/<version>/pdf.min.mjs` as a module (see `src/sharedPdfjs.ts`), the same
+  file `mendix.PdfTemplateDesigner` uses, and points the worker at the absolute URL from the
+  same folder, so API and worker versions can never mismatch and no relative `workerSrc` can 404.
+- **No shared globals.** The `window.pdfjsLib` that pdf.min.mjs assigns on import is put back
+  to whatever was there before; the widget never reads it.
 - **Streams the FileDocument by URL** (`/file?guid=...`) — no base64 attribute, no
   multi-megabyte strings in client state.
 
 ## Properties
-- **PDF file document** — list datasource; first item is the FileDocument to show
-  (e.g. microflow `Document.DS_FormDocument_LatestPdfList`).
-- **Changed date (cache key)** — optional DateTime attribute for cache busting.
+- **PDF file** — file property (`DynamicValue<FileValue>`); the platform provides the URI.
 - **Base64 fallback** — optional legacy string attribute, used only when no file document is wired.
 - Viewer height / Show toolbar / Show download.
 
 ## Develop
 ```
 npm install
-node scripts/embed-worker.js   # after bumping pdfjs-dist
-npm run build                  # dist/<version>/olari.PdfViewer.mpk
+npm run sync-pdfjs   # copies pdfjs-dist build into <projectPath>/theme/web/resources/pdfjs/<version>/
+npm run release      # dist/<version>/olari.PdfViewer.mpk
 ```
 Copy the mpk to `Olari-main/widgets/`, F4 sync, stop + run.

@@ -1,33 +1,20 @@
 import { Fragment, ReactElement, useCallback, useEffect, useRef, useState } from "react";
 import { PdfViewerContainerProps } from "../typings/PdfViewerProps";
-import { getDocument, GlobalWorkerOptions, PDFDocumentProxy } from "pdfjs-dist";
-import { PDF_WORKER_SOURCE } from "./pdfWorkerSource";
+import type { PDFDocumentProxy } from "pdfjs-dist";
+import { loadSharedPdfjs } from "./sharedPdfjs";
 import "./ui/PdfViewer.css";
 
 /*
  * Olari PDF Viewer.
  *
  * Design constraints (learned the hard way from mxtechies.ViewerPdf):
- * - NEVER read or write window.pdfjsLib. This widget's pdf.js is a scoped
- *   module import; Mendix's shared pdf.js and other widgets can do whatever
- *   they want with the global without affecting us.
- * - The worker ships INSIDE this bundle (blob worker from the same npm
- *   package), so the API and worker versions can never disagree and no
- *   relative workerSrc path can 404 from deep page URLs.
+ * - NEVER rely on window.pdfjsLib. pdf.js is imported as a module from the app's
+ *   single pinned copy (see sharedPdfjs.ts); the global it sets on import is put back.
+ * - The worker URL is absolute and from the same versioned folder as the API, so the
+ *   versions can never disagree and no relative workerSrc path can 404 from deep
+ *   page URLs.
  * - The PDF is streamed from the FileDocument URL (no base64 attribute).
  */
-
-let workerInstalled = false;
-function ensureOwnWorker(): void {
-    if (workerInstalled) {
-        return;
-    }
-    const blob = new Blob([PDF_WORKER_SOURCE], { type: "text/javascript" });
-    const url = URL.createObjectURL(blob);
-    // Module worker: pdf.worker.min.mjs is ESM.
-    GlobalWorkerOptions.workerPort = new Worker(url, { type: "module" });
-    workerInstalled = true;
-}
 
 function base64ToBytes(b64: string): Uint8Array {
     const clean = b64.replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
@@ -118,7 +105,7 @@ export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
             }
             setState({ phase: "loading" });
             try {
-                ensureOwnWorker();
+                const pdfjs = await loadSharedPdfjs();
                 let data: Uint8Array;
                 if (fileUrl) {
                     const res = await fetch(fileUrl, { credentials: "same-origin" });
@@ -135,7 +122,7 @@ export function PdfViewer(props: PdfViewerContainerProps): ReactElement {
                 // (/OpenAction, /Names /JavaScript, AcroForm /AA) can never execute here.
                 // isEvalSupported:false additionally stops pdf.js from compiling PostScript
                 // font programs with `new Function`, and enableXfa:false keeps XFA forms off.
-                const pdf = await getDocument({
+                const pdf = await pdfjs.getDocument({
                     data,
                     isEvalSupported: false,
                     enableXfa: false
